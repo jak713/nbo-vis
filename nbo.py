@@ -34,6 +34,7 @@ class NBO_SOP:
             lines = f.readlines()
 
         nbo_analysis_started = False
+        correct = 0
         for line in lines:
             if "SECOND ORDER PERTURBATION THEORY ANALYSIS OF FOCK MATRIX IN NBO BASIS" in line:
                 nbo_analysis_started = True
@@ -59,21 +60,22 @@ class NBO_SOP:
 
 
                 pattern = re.compile(r"""
-                    ^\s*
-                    (\d+)\.\s+                          # Donor Index (1)
-                    (LP|BD)\s*\(\s*(\d+)\s*\)\s+       # Donor Type (2), Donor Orb No (3)
-                    (.+?)\s{3,}                         # Donor Atom String (4) - Capture until 2+ spaces (separator)
-                    (\d+)\.\s+                          # Acceptor Index (5)
-                    (BD\*|RY|LV)\s*\(\s*(\d+)\s*\)\s+     # Acceptor Type (6), Acceptor Orb No (7)
-                    (.+?)\s+                            # Acceptor Atom String (8) - Capture until space before numbers
-                    ([\d.-]+)\s+                        # E(2) (9)
-                    ([\d.-]+)\s+                        # E Diff (10)
-                    ([\d.-]+)                           # Fock Elem (11)
-                    \s*$
-                """, re.VERBOSE)
+                ^\s*
+                (\d+)\.\s+                              # Donor Index (1)
+                (LP|BD|CR)\s*\(\s*(\d+)\s*\)\s*         # Donor Type (2), Donor Orb No (3)
+                ([A-Za-z0-9\s\-]+?)                     # Donor Atom String (4)
+                \s{2,}(?=\d+\.\s)                       # separator before acceptor index
+                (\d+)\.\s+                              # Acceptor Index (5)
+                (BD\*|RY|LV)\s*\(\s*(\d+)\s*\)\s*       # Acceptor Type (6), Acceptor Orb No (7)
+                ([A-Za-z0-9\s\-]+?)                     # Acceptor Atom String (8)
+                \s{2,}(?=[\d.-])                        # separator before numbers
+                ([\d.-]+)\s+                            # E(2) (9)
+                ([\d.-]+)\s+                            # E Diff (10)
+                ([\d.-]+)                               # Fock Elem (11)
+                \s*$
+            """, re.VERBOSE)
 
                 match = pattern.match(line)
-
                 if match:
                     donor_index = match.group(1)
                     donor_type = match.group(2)
@@ -89,11 +91,12 @@ class NBO_SOP:
                     # Split the atom strings into individual atoms
                     donor_atoms = re.split(r'\s*-\s*', donor_atom_string)
                     acceptor_atoms = re.split(r'\s*-\s*', acceptor_atom_string)
-                    # Create a dictionary for the NBO data
+                    # Create a dictionary for the NBO data)
+                    correct += 1
                 else:
                     print(f"Parse error in line: {line.strip()}")
                     continue
-
+                
                 nbo_entry = {
                     "Donor Index": donor_index,
                     "Donor Type": donor_type,
@@ -108,6 +111,8 @@ class NBO_SOP:
                     "Fock Elem": fock_elem
                 }
                 self.nbo_data.append(nbo_entry)
+            
+        print(f"Correctly matched {correct}/{len(lines)} lines")
         return self.nbo_data
     
     def print_nbo_data(self):
