@@ -10,23 +10,28 @@ class NBO_SOP:
         self.filepath = filepath
         self.extract_nbo_data()
 
-    def help():
+    def help(self):
         table_header = f"{'Command':<35} {'Description'}"
         print(table_header)
         print("-" * len(table_header))
         print(f"{'nbo = NBO_SOP(filepath)':<35} Create an instance with the file path to the NBO data.")
+        print("-" * len(table_header)*2)
         print(f"{'nbo.extract_nbo_data()':<35} Extract NBO data from the file.")
+        print("-" * len(table_header)*2)
         print(f"{'nbo.print_nbo_data()':<35} Print all NBO data as a formatted table.")
+        print("-" * len(table_header)*2)
         print(f"{'nbo.print_loneToAnti()':<35} Print LP → BD* interactions only.")
+        print("-" * len(table_header)*2)
         print(f"{'nbo.visualise_nbo_data(...)':<35} Visualise interactions with py3Dmol.")
         print(f"{'':<35} xyz_file: path to .xyz file")
-        print(f"{'':<35} view: optional py3Dmol view object")
+        print(f"{'':<35} view: optional py3Dmol view object (you can directly manipulate how the molecular skeleton looks)")
         print(f"{'':<35} display: bool to show the plot")
         print(f"{'':<35} donor, acceptor: filter by atoms, can be single atom or double e.g. 'C' or 'CN' or 'CC'")
         print(f"{'':<35} donor_type, acceptor_type: e.g. 'LP', 'BD*', 'RY'")
         print(f"{'':<35} E2_below, E2_above: numeric thresholds for E(2)")
         print(f"{'':<35} label: bool to label cylinders")
         print(f"{'':<35} print_latex: bool to output a LaTeX table")
+        print(f"{'':<35} proportional_radius: bool to make the cylinder radius of the interactions proportional to their relative strength (E2 value)")
 
     def extract_nbo_data(self):
         self.nbo_data = []
@@ -62,11 +67,11 @@ class NBO_SOP:
                 pattern = re.compile(r"""
                 ^\s*
                 (\d+)\.\s+                              # Donor Index (1)
-                (LP|BD|CR)\s*\(\s*(\d+)\s*\)\s*         # Donor Type (2), Donor Orb No (3)
+                (LP|BD|CR)\s*\(\s*(\d+)\s*\)\s*        # Donor Type (2), Donor Orb No (3)
                 ([A-Za-z0-9\s\-]+?)                     # Donor Atom String (4)
                 \s{2,}(?=\d+\.\s)                       # separator before acceptor index
                 (\d+)\.\s+                              # Acceptor Index (5)
-                (BD\*|RY|LV)\s*\(\s*(\d+)\s*\)\s*       # Acceptor Type (6), Acceptor Orb No (7)
+                (BD\*|RY|LV)\s*\(\s*(\d+)\s*\)\s*      # Acceptor Type (6), Acceptor Orb No (7)
                 ([A-Za-z0-9\s\-]+?)                     # Acceptor Atom String (8)
                 \s{2,}(?=[\d.-])                        # separator before numbers
                 ([\d.-]+)\s+                            # E(2) (9)
