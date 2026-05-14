@@ -198,14 +198,9 @@ class NBO_SOP:
             view = py3Dmol.view(width=1500, height=1000)
             view.addModel(open(xyz_file, 'r').read(), 'xyz')
             view.setStyle({'stick': {'radius': 0.03}})
-            view.setBackgroundColor('white')
-
-        # Add spheres for atoms
-        # for i, coord in enumerate(coordinates):
-        #     view.addSphere({'center': {'x': coord[0], 'y': coord[1], 'z': coord[2]}, 'radius': 0.2, 'color': 'gray'})
         
         if donor is not None:
-            if isinstance(donor, str) and len(donor) == 1:
+            if isinstance(donor, str) and (len(donor) == 1 or (len(donor) == 2 and donor[1].lower() == donor[1])):
                 donor = [donor]
             if isinstance(donor, str) and len(donor) in [1, 2]:
                 donor = list(donor)
@@ -227,6 +222,7 @@ class NBO_SOP:
                             continue
                         elif not (donor[0] == ''.join(filter(str.isalpha, entry["Donor Atoms"][0])) and donor[1] == ''.join(filter(str.isalpha, entry["Donor Atoms"][1]))):
                             continue
+
                 if acceptor is not None:
                     if len(acceptor) == 1:
                         if not any(acceptor[0] in atom for atom in entry["Acceptor Atoms"]):
@@ -236,6 +232,7 @@ class NBO_SOP:
                             continue
                         elif not (acceptor[0] == ''.join(filter(str.isalpha, entry["Acceptor Atoms"][0])) and acceptor[1] == ''.join(filter(str.isalpha, entry["Acceptor Atoms"][1]))):
                             continue
+
                 if E2_below is not None and entry["E(2)"] > E2_below:
                     continue
                 if E2_above is not None and entry["E(2)"] < E2_above:
@@ -244,9 +241,6 @@ class NBO_SOP:
 
                 donor_atoms = entry["Donor Atoms"]
                 acceptor_atoms = entry["Acceptor Atoms"]
-                # if donor or acceptor:
-                #     if len(donor_atoms) != len(donor) or len(acceptor_atoms) != len(acceptor):
-                #         continue
 
                 donor_index = int(re.findall(r'\d+', donor_atoms[-1])[-1]) - 1
                 acceptor_index = int(re.findall(r'\d+', acceptor_atoms[-1])[-1]) - 1
@@ -407,3 +401,5 @@ class NBO_SOP:
 
         connection_indexes = set(connection_indexes)
         return connection_indexes if not display else None
+    
+
