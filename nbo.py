@@ -32,6 +32,7 @@ class NBO_SOP:
         print(f"{'':<35} label: bool to label cylinders")
         print(f"{'':<35} print_latex: bool to output a LaTeX table")
         print(f"{'':<35} proportional_radius: bool to make the cylinder radius of the interactions proportional to their relative strength (E2 value)")
+        print(f"{'':<35} sum_interactions: bool to sum multiple interactions between the same donor and acceptor atoms (regardless of the orbital numbers/types) and visualise/print only the summed interaction with the total E(2) value")
 
     def extract_nbo_data(self):
         self.nbo_data = []
@@ -219,6 +220,13 @@ class NBO_SOP:
             if isinstance(acceptor, str) and len(acceptor) in [1, 2]:
                 acceptor = list(acceptor)
 
+        if sum_interactions:
+            interactions = {}
+            for entry in self.nbo_data:
+                key = (tuple(entry["Donor Atoms"]), tuple(entry["Acceptor Atoms"]))
+                current_count, current_energy = interactions.get(key, (0, 0.0))
+                interactions[key] = (current_count + 1, current_energy + entry["E(2)"])
+
         print(f"{'Donor Index':<12} {'Donor Type':<10} {'Donor Orb No':<12} "
             f"{'Donor Atoms':<25} {'Acceptor Index':<15} {'Acceptor Type':<12} "
             f"{'Acceptor Orb No':<15} {'Acceptor Atoms':<25} {'E(2)':>8} {'E Diff':>8} {'Fock Elem':>10} {'Int. Dist Å':>15}")
@@ -226,6 +234,18 @@ class NBO_SOP:
         counter = 0
 
         for entry in self.nbo_data:
+            if sum_interactions:
+                key = (tuple(entry["Donor Atoms"]), tuple(entry["Acceptor Atoms"]))
+        
+                if key in interactions:
+                    current_count, current_energy = interactions[key]
+                    
+                    if current_count == 1:
+                        pass
+                    else:
+                        interactions[key] = (current_count - 1, current_energy)
+                        continue
+
             if entry["Donor Type"] == donor_type and entry["Acceptor Type"] == acceptor_type:
                 if donor is not None:
                     if len(donor) == 1:
@@ -267,7 +287,6 @@ class NBO_SOP:
                     radius = 0.01 + (e2_value / vmax) * 0.04
                 else:
                     radius = 0.05                
-
 
                 # show e2 value as label at midpoint of the cylinder
                 mid_x = (coordinates[donor_index][0] + coordinates[acceptor_index][0]) / 2
