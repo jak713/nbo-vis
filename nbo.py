@@ -96,7 +96,7 @@ class NBO_SOP:
                     # Split the atom strings into individual atoms
                     donor_atoms = re.split(r'\s*-\s*', donor_atom_string)
                     acceptor_atoms = re.split(r'\s*-\s*', acceptor_atom_string)
-                    # Create a dictionary for the NBO data)
+
                     correct += 1
                 else:
                     print(f"Parse error in line: {line.strip()}")
@@ -168,20 +168,28 @@ class NBO_SOP:
         print(f"Total number of LP to BD* interactions: {counter}")
 
 ##########################################
-# For visualisation of NBO Second Order Perturbation Theory Analysis i am thinking of using xyz file for atom numbers with their positions and using the 
+# For visualisation of NBO Second Order Perturbation Theory Analysis: using xyz file for atom numbers with their positions and using the 
 # data to draw cylinder connections between the donor and acceptor atoms with thickness and colour depending on the E(2) value
 ## i.e. the larger the E(2) value the thicker the cylinder and the more red it is
 # i.e. the smaller the E(2) value the thinner the cylinder and the more blue it is
 ##########################################
-    def visualise_nbo_data(self, xyz_file, view=None, display=True, donor=None, acceptor=None, donor_type="LP", acceptor_type="BD*", E2_below=None, E2_above=None, label=True, print_latex=False, proportional_radius=False):
+
+    def _get_atom_coordinates(self):
+        """
+        Parses output file for cartesian coordinates in angstroms.
+        """
+        ...
+
+    def visualise_nbo_data(self, xyz_file, view=None, display=True, donor=None, acceptor=None, donor_type="LP", acceptor_type="BD*", E2_below=None, E2_above=None, label=True, print_latex=False, proportional_radius=False, sum_interactions=False):
         print("*" * 150)
         print("     Note this defaults to LP to BD* interactions, if you want to see other interactions please specify the donor and acceptor types.")
         print("*" * 150)
         print("")
-        connection_indexes = []
+        connection_indeces = []
         interaction_distances = []
         vmin = E2_above if E2_above is not None else 0  # Minimum E(2) value for color normalization
         vmax = E2_below if E2_below is not None else 1 if vmin == 0 else vmin + 0.1  # Maximum E(2) value for color normalization
+        
         with open(xyz_file, 'r') as f:
             lines = f.readlines()
         coordinates = []
@@ -210,6 +218,12 @@ class NBO_SOP:
                 acceptor = [acceptor]
             if isinstance(acceptor, str) and len(acceptor) in [1, 2]:
                 acceptor = list(acceptor)
+
+        print(f"{'Donor Index':<12} {'Donor Type':<10} {'Donor Orb No':<12} "
+            f"{'Donor Atoms':<25} {'Acceptor Index':<15} {'Acceptor Type':<12} "
+            f"{'Acceptor Orb No':<15} {'Acceptor Atoms':<25} {'E(2)':>8} {'E Diff':>8} {'Fock Elem':>10} {'Int. Dist Å':>15}")
+        print("=" * 180)
+        counter = 0
 
         for entry in self.nbo_data:
             if entry["Donor Type"] == donor_type and entry["Acceptor Type"] == acceptor_type:
@@ -282,45 +296,12 @@ class NBO_SOP:
                     'radius': radius,
                     'opacity': 0.8
                 })
-                connection_indexes.append((donor_index, acceptor_index))
+                connection_indeces.append((donor_index, acceptor_index))
                 if entry["E(2)"] > vmax:
                     vmax = entry["E(2)"]
                 if entry["E(2)"] < vmin:
                     vmin = entry["E(2)"]
 
-        # print only the visualised data in a table
-        print(f"{'Donor Index':<12} {'Donor Type':<10} {'Donor Orb No':<12} "
-            f"{'Donor Atoms':<25} {'Acceptor Index':<15} {'Acceptor Type':<12} "
-            f"{'Acceptor Orb No':<15} {'Acceptor Atoms':<25} {'E(2)':>8} {'E Diff':>8} {'Fock Elem':>10} {'Int. Dist Å':>15}")
-        print("=" * 180)
-        counter = 0
-        for entry in self.nbo_data:
-            if entry["Donor Type"] == donor_type and entry["Acceptor Type"] == acceptor_type:
-                if donor is not None:
-                    if len(donor) == 1:
-                        if not any(donor[0] in atom for atom in entry["Donor Atoms"]):
-                            continue
-                    elif len(donor) == 2:
-                        if len(entry["Donor Atoms"]) != 2:
-                            continue
-                        elif not (donor[0] == ''.join(filter(str.isalpha, entry["Donor Atoms"][0])) and donor[1] == ''.join(filter(str.isalpha, entry["Donor Atoms"][1]))):
-                            continue
-                if acceptor is not None:
-                    if len(acceptor) == 1:
-                        if not any(acceptor[0] in atom for atom in entry["Acceptor Atoms"]):
-                            continue
-                    elif len(acceptor) == 2:
-                        if len(entry["Acceptor Atoms"]) != 2:
-                            continue
-                        elif not (acceptor[0] == ''.join(filter(str.isalpha, entry["Acceptor Atoms"][0])) and acceptor[1] == ''.join(filter(str.isalpha, entry["Acceptor Atoms"][1]))):
-                            continue
-                if E2_below is not None and entry["E(2)"] > E2_below:
-                    continue
-                if E2_above is not None and entry["E(2)"] < E2_above:
-                    continue
-                # interaction distance is the distance between the midpoints of the donors and acceptors
-
-            
                 donor_atoms = ", ".join(entry["Donor Atoms"])
                 acceptor_atoms = ", ".join(entry["Acceptor Atoms"])
                 row = (
@@ -399,7 +380,7 @@ class NBO_SOP:
         cb.set_label(f'E(2) kcal/mol range\n[min: {vmin:.2f}, max: {vmax:.2f}]')
         plt.show()
 
-        connection_indexes = set(connection_indexes)
-        return connection_indexes if not display else None
+        connection_indeces = set(connection_indeces)
+        return connection_indeces if not display else None
     
 
