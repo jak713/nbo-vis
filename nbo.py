@@ -175,12 +175,6 @@ class NBO_SOP:
 # i.e. the smaller the E(2) value the thinner the cylinder and the more blue it is
 ##########################################
 
-    def _get_atom_coordinates(self):
-        """
-        Parses output file for cartesian coordinates in angstroms.
-        """
-        ...
-
     def visualise_nbo_data(self, xyz_file, view=None, display=True, donor=None, acceptor=None, donor_type="LP", acceptor_type="BD*", E2_below=None, E2_above=None, label=True, print_latex=False, proportional_radius=False, sum_interactions=False):
         print("*" * 150)
         print("     Note this defaults to LP to BD* interactions, if you want to see other interactions please specify the donor and acceptor types.")
